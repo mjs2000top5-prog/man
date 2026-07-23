@@ -5,13 +5,20 @@ from datetime import datetime
 import json
 import base64
 
-# 1. 구글 스프레드시트 연결 (Base64 안전 디코딩 방식)
+# 페이지 기본 설정
+st.set_page_config(page_title="영업 이슈 리포트", layout="centered")
+st.title("🚀 영업 이슈 리포트")
+
+# 구글 시트 연결 함수
 def connect_to_gsheet():
     try:
-        # Secrets에서 Base64 문자열을 읽어옴
+        if "BASE64_KEY" not in st.secrets:
+            st.error("Secrets에 BASE64_KEY가 설정되지 않았습니다.")
+            return None
+            
         base64_str = st.secrets["BASE64_KEY"]
         
-        # Base64 디코딩 후 JSON 파싱
+        # Base64 디코딩 및 JSON 변환
         decoded_bytes = base64.b64decode(base64_str)
         creds_info = json.loads(decoded_bytes.decode("utf-8"))
         
@@ -23,21 +30,17 @@ def connect_to_gsheet():
         creds = Credentials.from_service_account_info(creds_info, scopes=scopes)
         client = gspread.authorize(creds)
         
-        # 스프레드시트 연결 (ID)
         SPREADSHEET_ID = '1MTL6k_cLqXkUUbxv0JKZtykC_81LYOK6Qxb4VYm-1rE'
         sheet = client.open_by_key(SPREADSHEET_ID).get_worksheet(0)
         return sheet
     except Exception as e:
-        st.error(f"연결 에러 상세: {e}")
+        st.error(f"연결 오류 발생: {e}")
         return None
 
-# 2. UI 구성
-st.set_page_config(page_title="영업 이슈 리포트", layout="centered")
-st.title("🚀 영업 이슈 리포트")
-
+# UI 폼 구성
 with st.form("issue_form", clear_on_submit=True):
-    manager = st.radio("담당자", ["이광호", "문정수", "박원덕" , "상담이슈"], horizontal=True)
-    products = st.multiselect("상품 선택", ["위멤버스 프리미엄", "위멤버스 스탠다드", "세모리포트 플러스", "세모리포트 베이직", "링크패스", "경리나라T"])
+    manager = st.radio("담당자", ["이광호", "문정수", "박원덕" , "상담 이슈" ], horizontal=True)
+    products = st.multiselect("가입 상품", ["위멤버스 프리미엄", "위멤버스 스탠다드", "세모리포트 플러스", "세모리포트 베이직", "링크패스", "경리나라T"])
     issue_detail = st.text_area("상세 이슈", height=200)
     submit_button = st.form_submit_button("이슈 등록 완료")
 
