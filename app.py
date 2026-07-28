@@ -3,46 +3,47 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import json
-import pandas as pd
 
-# 1. 구글 스프레드시트 연결 설정
+st.set_page_config(page_title="영업 이슈 리포트", layout="centered")
+st.title("🚀 영업 이슈 리포트")
+
+# 구글 스프레드시트 연결 함수
 def connect_to_gsheet():
+    if "JSON_DATA" not in st.secrets:
+        st.error("Secrets 설정에서 'JSON_DATA' 키를 찾을 수 없습니다.")
+        return None
+        
     try:
-        # Secrets에서 JSON 텍스트 덩어리를 가져옴
-        json_text = st.secrets["JSON_DATA"]
-        # 텍스트를 파이썬 딕셔너리로 변환 (문법 오류 방지 핵심)
-        creds_info = json.loads(json_text)
+        # Secrets에서 JSON 텍스트 파싱
+        json_data = st.secrets["JSON_DATA"]
+        creds_info = json.loads(json_data)
         
         scopes = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
         ]
         
-        # 변환된 정보로 인증 진행
         creds = Credentials.from_service_account_info(creds_info, scopes=scopes)
         client = gspread.authorize(creds)
         
-        # 스프레드시트 ID
-SPREADSHEET_ID = '1t1reQUHfw0K7BEzPcaxOaCtP8x--ATip7tGhGy11NTU'
+        # 구글 시트 연결
+        SPREADSHEET_ID = '1t1reQUHfw0K7BEzPcaxOaCtP8x--ATip7tGhGy11NTU'
         sheet = client.open_by_key(SPREADSHEET_ID).get_worksheet(0)
         return sheet
     except Exception as e:
-        st.error(f"구글 시트 인증 오류: {e}")
+        st.error(f"구글 시트 인증/연결 오류: {e}")
         return None
 
-# 2. UI 구성
-st.set_page_config(page_title="영업 이슈 리포트", layout="centered")
-st.title("🚀 영업 이슈 리포트")
-
+# UI 입력 폼
 with st.form("issue_form", clear_on_submit=True):
-    manager = st.radio("담당자", ["이광호", "문정수", "박원덕" , "상담 이슈"], horizontal=True)
-    products = st.multiselect("상품 선택", ["위멤버스 프리미엄", "위멤버스 스탠다드", "세모리포트 플러스", "세모리포트 베이직", "링크패스", "경리나라T"])
-    issue_detail = st.text_area("상세 이슈 내용", height=200, placeholder="특이사항을 입력하세요.")
+    manager = st.radio("담당자", ["이광호", "문정수", "박원덕", "상담이슈"], horizontal=True)
+    products = st.multiselect("가입 상품", ["위멤버스 프리미엄", "위멤버스 스탠다드", "세모리포트 플러스", "세모리포트 베이직", "링크패스", "경리나라T"])
+    issue_detail = st.text_area("상세 이슈", height=200)
     submit_button = st.form_submit_button("이슈 등록 완료")
 
 if submit_button:
     if not products or not issue_detail.strip():
-        st.warning("항목을 모두 입력해 주세요.")
+        st.warning("모든 항목을 입력해 주세요.")
     else:
         sheet = connect_to_gsheet()
         if sheet:
@@ -50,7 +51,7 @@ if submit_button:
                 now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 product_list = ", ".join(products)
                 sheet.append_row([now, manager, product_list, issue_detail])
-                st.success("✅ 스프레드시트에 등록 완료!")
+                st.success("✅ 스프레드시트에 정상 등록되었습니다!")
                 st.balloons()
             except Exception as e:
-                st.error(f"저장 실패: {e}")
+                st.error(f"데이터 저장 실패: {e}")
