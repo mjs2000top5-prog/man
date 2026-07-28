@@ -23,11 +23,11 @@ def connect_to_gsheet():
         client = gspread.authorize(creds)
         
         # 스프레드시트 ID
-        SPREADSHEET_ID = '1MTL6k_cLqXkUUbxv0JKZtykC_81LYOK6Qxb4VYm-1rE'
+SPREADSHEET_ID = '1t1reQUHfw0K7BEzPcaxOaCtP8x--ATip7tGhGy11NTU'
         sheet = client.open_by_key(SPREADSHEET_ID).get_worksheet(0)
         return sheet
     except Exception as e:
-        st.error(f"인증 실패: {e}")
+        st.error(f"구글 시트 인증 오류: {e}")
         return None
 
 # 2. UI 구성
