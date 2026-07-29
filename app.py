@@ -18,6 +18,10 @@ def connect_to_gsheet():
         json_data = st.secrets["JSON_DATA"]
         creds_info = json.loads(json_data)
         
+        # private_key 내부의 이스케이프 기호(\n)를 실제 줄바꿈 문자로 변환 (JWT 서명 오류 방지)
+        if "private_key" in creds_info:
+            creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
+        
         scopes = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
@@ -36,7 +40,7 @@ def connect_to_gsheet():
 
 # UI 입력 폼
 with st.form("issue_form", clear_on_submit=True):
-    manager = st.radio("담당자", ["이광호", "문정수", "박원덕", "상담이슈"], horizontal=True)
+    manager = st.radio("담당자", ["이광호", "문정수", "박원덕" , "상담이슈"], horizontal=True)
     products = st.multiselect("가입 상품", ["위멤버스 프리미엄", "위멤버스 스탠다드", "세모리포트 플러스", "세모리포트 베이직", "링크패스", "경리나라T"])
     issue_detail = st.text_area("상세 이슈", height=200)
     submit_button = st.form_submit_button("이슈 등록 완료")
