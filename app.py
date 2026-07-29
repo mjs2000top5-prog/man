@@ -2,27 +2,30 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
+import base64
+import json
 
 st.set_page_config(page_title="영업 이슈 리포트", layout="centered")
 st.title("🚀 영업 이슈 리포트")
 
-# 구글 스프레드시트 연결 함수 (Streamlit 공식 방식)
+# 구글 스프레드시트 연결 함수 (Base64 방식)
 def connect_to_gsheet():
-    if "gcp_service_account" not in st.secrets:
-        st.error("Secrets 설정에서 [gcp_service_account] 섹션을 찾을 수 없습니다.")
+    if "GCP_KEY_BASE64" not in st.secrets:
+        st.error("Secrets 설정에서 'GCP_KEY_BASE64' 키를 찾을 수 없습니다.")
         return None
         
     try:
+        # Base64 문자열 복호화하여 JSON 디코딩
+        base64_key = st.secrets["GCP_KEY_BASE64"]
+        json_key_bytes = base64.b64decode(base64_key)
+        creds_info = json.loads(json_key_bytes.decode('utf-8'))
+        
         scopes = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
         ]
         
-        # Streamlit Secrets 딕셔너리를 직접 전달 (Streamlit이 줄바꿈 자동 처리)
-        creds = Credentials.from_service_account_info(
-            st.secrets["gcp_service_account"], 
-            scopes=scopes
-        )
+        creds = Credentials.from_service_account_info(creds_info, scopes=scopes)
         client = gspread.authorize(creds)
         
         # 구글 시트 연결
